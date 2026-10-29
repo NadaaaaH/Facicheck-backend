@@ -2,7 +2,7 @@ fastapi
 uvicorn
 python-multipart
 opencv-python-headless
-mediapipe
+mediapipe==0.10.21
 numpy
 pandas
 scikit-learn
