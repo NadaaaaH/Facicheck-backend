@@ -52,6 +52,7 @@ R_EYE_IN, L_EYE_IN = 133, 362
 R_EYE_PAIRS = [(160, 144), (159, 145), (158, 153)]
 L_EYE_PAIRS = [(385, 380), (386, 374), (387, 373)]
 R_IRIS, L_IRIS = 468, 473
+R_BROW, L_BROW = 105, 334
 R_MOUTH, L_MOUTH = 61, 291
 NOSE_TIP = 1
 EPS = 1e-9
@@ -168,5 +169,13 @@ def analyze(ext, image_input, mode="live", cfg=CFG):
     ex = extra_features(pts)
     m = gate_metrics(img_up, pts, ft, ex, count_faces(img_up))
     viol = violations(m, mode, cfg)
+    landmarks = {
+        "brow_left": [float(value) for value in pts[L_BROW]],
+        "brow_right": [float(value) for value in pts[R_BROW]],
+        "eye_left": [float(value) for value in pts[L_IRIS]],
+        "eye_right": [float(value) for value in pts[R_IRIS]],
+        "mouth_left": [float(value) for value in pts[L_MOUTH]],
+        "mouth_right": [float(value) for value in pts[R_MOUTH]],
+    }
     return {"ok": not viol, "violations": viol, "messages": [MESSAGES[r] for r in viol],
-            "features": {**ft, **ex}, "metrics": m}
+            "features": {**ft, **ex}, "metrics": m, "landmarks": landmarks}

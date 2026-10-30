@@ -76,6 +76,7 @@ async def predict_face(file: UploadFile = File(...)):
     return {
         "ok": True,
         "status": "BERHASIL",
+        "landmarks": gate_res["landmarks"],
         "result": {
             "label": label,
             "code": code,
