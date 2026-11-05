@@ -59,6 +59,47 @@ EPS = 1e-9
 _FD = None
 
 
+def _normalized_original_point(point, original_shape, quarter_turns):
+    """Map a point from the upright image back to the uploaded image, in [0, 1]."""
+    h, w = original_shape[:2]
+    x, y = map(float, point)
+
+    if quarter_turns == 1:
+        x, y = y, h - x
+    elif quarter_turns == 2:
+        x, y = w - x, h - y
+    elif quarter_turns == 3:
+        x, y = w - y, x
+
+    return [float(np.clip(x / w, 0.0, 1.0)),
+            float(np.clip(y / h, 0.0, 1.0))]
+
+
+def _response_landmarks(pts, original_shape, quarter_turns):
+    """Return normalized feature anchors in the uploaded image's coordinate frame."""
+    point = lambda index: _normalized_original_point(pts[index], original_shape, quarter_turns)
+
+    return {
+        "brow": {
+            "left": {"brow": point(L_BROW), "iris": point(L_IRIS)},
+            "right": {"brow": point(R_BROW), "iris": point(R_IRIS)},
+        },
+        "eye": {
+            "left": {
+                "outer": point(L_EYE_OUT),
+                "inner": point(L_EYE_IN),
+                "lid_pairs": [{"upper": point(a), "lower": point(b)} for a, b in L_EYE_PAIRS],
+            },
+            "right": {
+                "outer": point(R_EYE_OUT),
+                "inner": point(R_EYE_IN),
+                "lid_pairs": [{"upper": point(a), "lower": point(b)} for a, b in R_EYE_PAIRS],
+            },
+        },
+        "mouth": {"left": point(L_MOUTH), "right": point(R_MOUTH)},
+    }
+
+
 def count_faces(img_bgr):
     """Jumlah wajah 'besar' di foto (wajah kecil di latar diabaikan). Minimal 1."""
     global _FD
@@ -161,6 +202,7 @@ def analyze(ext, image_input, mode="live", cfg=CFG):
     if img is None:
         return {"ok": False, "violations": ["wajah_tidak_terdeteksi"],
                 "messages": [MESSAGES["wajah_tidak_terdeteksi"]], "features": None, "metrics": None}
+    original_shape = img.shape
     img_up, pts, k = ext.canonicalize(img)
     if pts is None:
         return {"ok": False, "violations": ["wajah_tidak_terdeteksi"],
@@ -177,5 +219,7 @@ def analyze(ext, image_input, mode="live", cfg=CFG):
         "mouth_left": [float(value) for value in pts[L_MOUTH]],
         "mouth_right": [float(value) for value in pts[R_MOUTH]],
     }
+    landmark_anchors = _response_landmarks(pts, original_shape, k)
     return {"ok": not viol, "violations": viol, "messages": [MESSAGES[r] for r in viol],
-            "features": {**ft, **ex}, "metrics": m, "landmarks": landmarks}
+            "features": {**ft, **ex}, "metrics": m, "landmarks": landmarks,
+            "landmark_anchors": landmark_anchors}

@@ -76,15 +76,19 @@ async def predict_face(file: UploadFile = File(...)):
     return {
         "ok": True,
         "status": "BERHASIL",
+
+        # Keep the original top-level field for existing API clients.
         "landmarks": gate_res["landmarks"],
         "result": {
             "label": label,
             "code": code,
             "probability": round(prob_bell * 100, 1),
+            "landmarks": gate_res["landmark_anchors"],
             "asymmetry_metrics": {
                 "brow_asymmetry": round(features.get("brow_asym", 0), 3),
                 "eye_asymmetry": round(features.get("ear_asym", 0), 3),
-                "mouth_tilt": round(features.get("mouth_tilt", 0), 3)
+                "mouth_tilt": round(features.get("mouth_tilt", 0), 3),
+                "mouth_tilt_signed": round(features.get("mouth_tilt_signed", 0), 3),
             }
         }
     }
